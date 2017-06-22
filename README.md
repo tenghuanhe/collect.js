@@ -341,6 +341,18 @@ filtered.all();
 //=> [3, 4]
 ```
 
+If no callback is supplied, all entries of the collection that are equivalent to `false` will be removed:
+
+```js
+const collection = collect([0, 1, 2, null, 3, 4, undefined, 5, 6, 7, [], 8, 9, {}, 10]);
+
+const filtered = collection.filter();
+
+filtered.all();
+
+//=> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+```
+
 > For the inverse of ``filter``, see the ``reject`` method.
 
 #### ``first()``
@@ -1674,6 +1686,40 @@ const filtered = collection.where('price', '<', 100);
 filtered.all();
 
 //=> []
+```
+**Less than or equal operator ``(<=)``**
+```js
+const filtered = collection.where('price', '<=', 100);
+
+filtered.all();
+
+//=> [
+//=>   {product: 'Chair', price: 100},
+//=>   {product: 'Door', price: 100}
+//=> ]
+```
+
+**Greater than operator ``(>)``**
+```js
+const filtered = collection.where('price', '>', 100);
+
+filtered.all();
+
+//=> [
+//=>   {product: 'Desk', price: 200},
+//=>   {product: 'Bookcase', price: 150}
+//=> ]
+```
+**Greater than or equal operator ``(>=)``**
+```js
+const filtered = collection.where('price', '>=', 150);
+
+filtered.all();
+
+//=> [
+//=>   {product: 'Desk', price: 200},
+//=>   {product: 'Bookcase', price: 150}
+//=> ]
 ```
 
 #### ``whereIn()``

@@ -279,7 +279,7 @@ describe('Collect.js Test Suite', function () {
     expect(piped).to.eql(6);
   });
 
-  it('should filter the collection by a given callback', function () {
+  it('should filter the collection by a given callback, filtering based on value', function () {
     const collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
     const filtered = collection.filter(function (item) {
@@ -289,6 +289,28 @@ describe('Collect.js Test Suite', function () {
     expect(filtered.all()).to.eql([2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
     expect(collection.all()).to.eql([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('should filter the collection by a given callback, filtering based on value', function () {
+    const collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+    const filtered = collection.filter(function (item, key) {
+      return key > 3 && key < 7;
+    });
+
+    expect(filtered.all()).to.eql([5, 6, 7]);
+
+    expect(collection.all()).to.eql([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('should filter the collection removing falsy values if no call back is passed', function () {
+    const collection = collect([0, 1, 2, null, 3, 4, undefined, 5, 6, 7, [], 8, 9, {}, 10]);
+
+    const filtered = collection.filter();
+
+    expect(filtered.all()).to.eql([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+    expect(collection.all()).to.eql([0, 1, 2, null, 3, 4, undefined, 5, 6, 7, [], 8, 9, {}, 10]);
   });
 
   it('should determine if a key exists in the collection', function () {
@@ -583,11 +605,13 @@ describe('Collect.js Test Suite', function () {
     ]);
 
     const filtered4 = collection2.where('price', '!=', 100);
+    const filtered4_2 = collection2.where('price', '<>', 100);
 
     expect(filtered4.all()).to.eql([
       { 'product': 'Desk', 'price': 200 },
       { 'product': 'Bookcase', 'price': 150 }
     ]);
+    expect(filtered4_2).to.eql(filtered4);
 
     const filtered5 = collection2.where('price', '<', 100);
 
@@ -597,6 +621,28 @@ describe('Collect.js Test Suite', function () {
 
     expect(filtered6.all()).to.eql([
       { 'product': 'Chair', 'price': 100 }
+    ]);
+
+    const filtered7 = collection2.where('price', '<=', 150);
+
+    expect(filtered7.all()).to.eql([
+      { product: 'Chair', price: 100 },
+      { product: 'Bookcase', price: 150 },
+      { product: 'Door', price: '100' }
+    ]);
+
+    const filtered8 = collection2.where('price', '>', 100);
+
+    expect(filtered8.all()).to.eql([
+      { product: 'Desk', price: 200 },
+      { product: 'Bookcase', price: 150 }
+    ]);
+
+    const filtered9 = collection2.where('price', '>=', 150);
+
+    expect(filtered9.all()).to.eql([
+      { product: 'Desk', price: 200 },
+      { product: 'Bookcase', price: 150 }
     ]);
   });
 
@@ -738,7 +784,22 @@ describe('Collect.js Test Suite', function () {
   it('should return the collection in chunks', function () {
     expect(collect([1, 2, 3, 4, 5]).chunk(4).all()).to.eql([[1, 2, 3, 4], [5]]);
 
-    const collection = collect(dataset.products);
+    const collection = collect([{
+      id: 100,
+      product: 'Chair',
+      manufacturer: 'IKEA',
+      price: '1490 NOK'
+    }, {
+      id: 150,
+      product: 'Desk',
+      manufacturer: 'IKEA',
+      price: '900 NOK'
+    }, {
+      id: 200,
+      product: 'Chair',
+      manufacturer: 'Herman Miller',
+      price: '9990 NOK'
+    }]);
 
     const chunk = collection.chunk(1);
 
@@ -762,8 +823,23 @@ describe('Collect.js Test Suite', function () {
         price: '9990 NOK'
       }]
     ]);
-
-    expect(collection.all()).to.eql(dataset.products);
+    
+    expect(collection.all()).to.eql([{
+      id: 100,
+      product: 'Chair',
+      manufacturer: 'IKEA',
+      price: '1490 NOK'
+    }, {
+      id: 150,
+      product: 'Desk',
+      manufacturer: 'IKEA',
+      price: '900 NOK'
+    }, {
+      id: 200,
+      product: 'Chair',
+      manufacturer: 'Herman Miller',
+      price: '9990 NOK'
+    }]);
   });
 
   it('should collapse a collection of arrays into a flat collection', function () {
@@ -1016,7 +1092,12 @@ describe('Collect.js Test Suite', function () {
       return value > 2;
     });
 
+    const shouldBeFalse2 = collection.every(function (value, key) {
+      return value < 2;
+    });
+
     expect(shouldBeFalse).to.eql(false);
+    expect(shouldBeFalse2).to.eql(false);
 
     const shouldBeTrue = collection.every(function (value, key) {
       return value <= 4;
@@ -1263,6 +1344,10 @@ describe('Collect.js Test Suite', function () {
     expect(arrayOfRandomValues.all()[1]).to.be.within(1, 5);
     expect(arrayOfRandomValues.all()[2]).to.be.within(1, 5);
     expect(arrayOfRandomValues.all()[3]).to.eql(undefined);
+
+    const collection2 = collect([1, 2, 3, 4, 5, 8, 6]);
+    collection2.random();
+    expect(collection2.items).to.eql([1, 2, 3, 4, 5, 8, 6]);
   });
 
   it('should reduce the collection to a single value, ' +
@@ -1361,12 +1446,12 @@ describe('Collect.js Test Suite', function () {
   });
 
   it('should sort the collection', function () {
-    const collection = collect([5, 3, 1, 2, 4]);
+    const collection = collect([5, 3, 1, 2, 10, 4]);
 
     const sorted = collection.sort();
 
-    expect(sorted.all()).to.eql([1, 2, 3, 4, 5]);
-    expect(collection.all()).to.eql([5, 3, 1, 2, 4]);
+    expect(sorted.all()).to.eql([1, 2, 3, 4, 5, 10]);
+    expect(collection.all()).to.eql([5, 3, 1, 2, 10, 4]);
 
     const collection2 = collect([5, 3, 1, 2, 4]);
 
